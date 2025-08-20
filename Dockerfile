@@ -172,16 +172,12 @@ RUN echo "Building for platform '$TARGETPLATFORM'" \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} qemu-ga luci luci-ssl umdns losetup ${PACKAGE_EXTRA}" \
     # Download USB, PCI and PCIe support \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} usbutils pciutils" \
-    # Download Wi-Fi access point support and Wi-Fi USB devices support \
-    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} hostapd wpa-supplicant kmod-mt7921u" \
-    # Download celluar network support \
-    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} modemmanager kmod-usb-net-qmi-wwan luci-proto-modemmanager qmi-utils" \
-    # Download basic GPS support \
-    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} kmod-usb-serial minicom gpsd" \
     # Add Wireguard support \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} wireguard-tools luci-proto-wireguard" \
     # Add Power off script support \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} luci-app-advanced-reboot" \
+    ## Add my stuff \
+    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} parted resize2fs blkid nmap curl jq ca-bundle ca-certificates ethtool-full diffutils kmod-9pvirtio kmod-fs-9p kmod-igc kmod-i40e" \
     \
     # Add default network config \
     && ssh root@localhost -p $SSH_PORT "uci set network.lan.ipaddr='172.31.1.1/24'; uci commit network" \
