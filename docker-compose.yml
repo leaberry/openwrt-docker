@@ -23,6 +23,7 @@ services:
                      # QEMUs network configuration network: 192.168.1.0/24
                      # To be usable add to the OpenWrt LAN interface an IP address in the range 192.168.1.10-192.168.1.255 (recommend is 192.168.1.15)
                      # See https://wiki.qemu.org/Documentation/Networking for more details
+      #LAN_IF: "none" # No LAN interface defined. LUCI forwarding will not work. Useful for exclusive pci-passthrough setups
       LAN_IF: "veth" # veth pair between OpenWrt and host system.
                      # The host Ethernet interface IP is fixed to 172.31.1.2/24
       #LAN_IF: "veth,nofixedip" # veth pair between OpenWrt and host system.
@@ -152,9 +153,13 @@ services:
       - NET_ADMIN
     pid: "host"
     privileged: true
+    ## Setup your compose file to provide a directory inside the container named '/shared'
+    ## If directory exists passthrough using virtfs. Guest/openwrt can mount with 9p filesystem
+    ## mkdir /shared && mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
     volumes:
       - /dev:/dev/
       - data:/storage/
+      #- shared:/shared/
 
 volumes:
   data:

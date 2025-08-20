@@ -197,11 +197,14 @@ if [ -n "$KVM_ERR" ]; then
 fi
 
 # Attach physical PHY to container
+## Allow for LAN_IF to be empty for pure pci-passthrough only setup
 LAN_ARGS=""
 LAN_IF_NAME=$(echo $LAN_IF | cut -d',' -f1)
 LAN_IF_OPTION=$(echo $LAN_IF | cut -d',' -f2)
 if [[ -z "${LAN_IF_NAME}" || $LAN_IF_NAME = "host" ]]; then
   LAN_ARGS="-device virtio-net,netdev=qlan0 -netdev user,id=qlan0,net=192.168.1.0/24"
+elif [[ $LAN_IF = "none" ]]; then
+  LAN_ARGS=""
 elif [[ $LAN_IF_NAME = "veth" ]]; then
   attach_veth_if veth-openwrt0 veth1 qlan1 $LAN_IF_OPTION
   exec 30<>/dev/tap$(cat /sys/class/net/qlan1/ifindex)
@@ -291,6 +294,16 @@ else
   DEBUG_ARGS=""
 fi
 
+## Setup your compose file to provide a directory inside the container named '/shared'
+## Passthrough this folder using virtfs. Guest/openwrt can mount with 9p filesystem
+## mkdir /shared && mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
+## Use the 'none' security_model which works fine for root <-> root mapping
+if [[ -d /shared ]]; then
+  SHARE_FOLDER="-virtfs local,path=/shared,mount_tag=shared,security_model=none,id=shared"
+else
+  SHARE_FOLDER=""
+fi
+
 # Prepare qemu command
 CMD="qemu-system-$CPU_ARCH \
 --enable-kvm -cpu host \
@@ -305,6 +318,7 @@ $LAN_ARGS \
 $WAN_ARGS \
 $USB_ARGS \
 $PCI_ARGS \
+$SHARE_FOLDER \
 -qmp unix:/run/qmp-sock,server=on,wait=off \
 -chardev socket,path=/run/qga.sock,server=on,wait=off,id=qga0 \
 -device virtio-serial \
