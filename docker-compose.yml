@@ -156,10 +156,11 @@ services:
     ## Setup your compose file to provide a directory inside the container named '/shared'
     ## If directory exists passthrough using virtfs. Guest/openwrt can mount with 9p filesystem
     ## mkdir /shared && mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
+    ## This command is in /etc/rc.local so you can just run 'sh /etc/rc.local' as well
     volumes:
       - /dev:/dev/
-      - data:/storage/
-      #- shared:/shared/
+      - root:/storage/
+      - shared:/shared/
 
 volumes:
   data:

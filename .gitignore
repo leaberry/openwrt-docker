@@ -43,6 +43,8 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+/root
+/shared
 
 # System files
 .DS_Store

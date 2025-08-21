@@ -176,11 +176,20 @@ RUN echo "Building for platform '$TARGETPLATFORM'" \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} wireguard-tools luci-proto-wireguard" \
     # Add Power off script support \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} luci-app-advanced-reboot" \
-    ## Add my stuff \
-    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} parted resize2fs blkid nmap curl jq ca-bundle ca-certificates ethtool-full diffutils kmod-9pvirtio kmod-fs-9p kmod-igc kmod-i40e" \
+    ## Packages needed for virtfs shared mount \
+    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} kmod-9pvirtio kmod-fs-9p block-mount libmount1" \
+    ## Add my stuff/drivers \
+    && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL} parted resize2fs blkid nmap curl jq ca-bundle ca-certificates ethtool-full diffutils kmod-i40e" \
     \
     # Add default network config \
     && ssh root@localhost -p $SSH_PORT "uci set network.lan.ipaddr='172.31.1.1/24'; uci commit network" \
+    ## Add the automount of shared filesystem \
+    ## But this doesn't work. It inserts a fstab.uuid property and even with that gone block-mount just doesn't like our entry \
+    ## probably because it lacks a disk type of name \
+    #&& ssh root@localhost -p $SSH_PORT  "mkdir /shared; uci set fstab.@mount[-1].target='/shared'; uci set fstab.@mount[-1].device='/dev/shared'; uci set fstab.@mount[-1].fstype='9p'; uci set fstab.@mount[-1].options='trans=virtio,version=9p2000.L,rw'; uci set fstab.@mount[-1].enabled='1'; uci commit fstab " \
+    #&& ssh root@localhost -p $SSH_PORT  "mkdir /shared; echo 'shared /shared 9p trans=virtio,version=9p2000.L 0 0' > /etc/fstab" \
+    ## So let's just hack it in for now via rc.local \
+    && ssh root@localhost -p $SSH_PORT  "echo 'mkdir -p /shared && mount -t 9p -o trans=virtio,version=9p2000.L shared /shared' > /etc/rc.local; chmod +x /etc/rc.local" \
     \
     # Add some files \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL}  openssh-sftp-server" \
