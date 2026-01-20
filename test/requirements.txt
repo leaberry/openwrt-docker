@@ -1,6 +1,6 @@
 polling2
 pytest
-pytest-docker
+pytest-docker==3.2.4
 requests[security]
 pyyaml
 pytest-html
