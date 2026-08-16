@@ -6,12 +6,12 @@ on:
       - master
 
 env:
-  OPENWRT_VERSION: 25.12.0
+  OPENWRT_VERSION: 25.12.5
 
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     services:
       registry:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
@@ -149,7 +149,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Generate alpine SBOM
         uses: anchore/sbom-action@v0
@@ -214,7 +214,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download artifact
         uses: actions/download-artifact@v8
@@ -225,8 +225,14 @@ jobs:
       - name: Install VMs
         run: |
           set -x
-          sudo snap install multipass # multipass >= 1.15 because of networks support
-          sudo chmod a+w /var/snap/multipass/common/multipass_socket # Fix 'multipass socket access denied'
+          sudo snap install multipass # need multipass >= 1.15 because of networks support
+
+          # Workaround for "multipass_root_cert.pem': No such file or directory" issue, see https://github.com/canonical/multipass/issues/5015
+          sleep 180
+
+          # Workaround for 'multipass socket access denied'
+          sudo chmod a+w /var/snap/multipass/common/multipass_socket
+
           multipass find
 
           # Set up some bridges for the VMs
@@ -327,7 +333,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Login into Docker Hub
         uses: docker/login-action@v4
