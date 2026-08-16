@@ -169,8 +169,7 @@ if [ -n "$KVM_ERR" ]; then
     error "KVM acceleration not detected $KVM_ERR. Please check if your host system is supporting kernel virtual machine (KVM) and if your enabled the CPU virtualization feature in your bios."
 fi
 
-# Attach physical PHY to container
-## Allow for LAN_IF to be empty for pure pci-passthrough only setup
+# Configure the LAN interface
 LAN_ARGS=""
 LAN_IF_NAME=$(echo $LAN_IF | cut -d',' -f1)
 LAN_IF_OPTION=$(echo $LAN_IF | cut -d',' -f2)
@@ -267,10 +266,8 @@ else
   DEBUG_ARGS=""
 fi
 
-## Setup your compose file to provide a directory inside the container named '/shared'
-## Passthrough this folder using virtfs. Guest/openwrt can mount with 9p filesystem
-## mkdir /shared && mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
-## Use the 'none' security_model which works fine for root <-> root mapping
+# Pass a mounted /shared directory to the guest. security_model=none preserves
+# the existing root-to-root behavior expected by this feature.
 if [[ -d /shared ]]; then
   SHARE_FOLDER="-virtfs local,path=/shared,mount_tag=shared,security_model=none,id=shared"
 else

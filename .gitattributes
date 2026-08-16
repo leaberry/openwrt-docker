@@ -1,0 +1,4 @@
+*.sh text eol=lf
+Dockerfile text eol=lf
+openwrt_additional/etc/init.d/* text eol=lf
+openwrt_additional/usr/bin/* text eol=lf

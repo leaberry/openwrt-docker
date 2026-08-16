@@ -2,6 +2,7 @@
 test/tests/__pycache__/
 test/__pycache__/
 test/tests/.pytest_cache/
+test-runtime/
 .venv
 web-backend/target
 dev_tools/*.img

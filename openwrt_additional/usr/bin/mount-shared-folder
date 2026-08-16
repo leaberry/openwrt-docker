@@ -1,0 +1,19 @@
+#!/bin/sh
+
+MOUNT_TAG="shared"
+MOUNT_POINT="/shared"
+
+# If QEMU did not expose the virtfs device, there is nothing to mount.
+tag_found=false
+for tag_file in /sys/bus/virtio/drivers/9pnet_virtio/virtio*/mount_tag; do
+    if [ -r "$tag_file" ] && [ "$(cat "$tag_file")" = "$MOUNT_TAG" ]; then
+        tag_found=true
+        break
+    fi
+done
+
+[ "$tag_found" = true ] || exit 0
+
+mkdir -p "$MOUNT_POINT"
+mountpoint -q "$MOUNT_POINT" || \
+    mount -t 9p -o trans=virtio,version=9p2000.L,rw "$MOUNT_TAG" "$MOUNT_POINT"

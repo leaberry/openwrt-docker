@@ -1,0 +1,24 @@
+name: openwrt-shared-folder-test
+
+services:
+  openwrt-test:
+    container_name: openwrt-shared-folder-test
+    image: openwrt-docker-shared:25.12.5-test
+    environment:
+      # Both guest NICs use QEMU SLIRP. No host Ethernet, PCI, USB, tap, or
+      # macvtap interface is passed through or modified by this configuration.
+      LAN_IF: "host"
+      WAN_IF: "host"
+      FORWARD_LUCI: "false"
+      CPU_COUNT: "2"
+      RAM_COUNT: "512"
+      DEBUG: "true"
+    ports:
+      - "127.0.0.1:18006:8006"
+    devices:
+      - /dev/kvm:/dev/kvm
+    restart: "no"
+    stop_grace_period: 2m
+    volumes:
+      - ./test-runtime/storage:/storage
+      - ./test-runtime/shared:/shared

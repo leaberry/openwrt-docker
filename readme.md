@@ -109,6 +109,25 @@ Clone this repo and run
 docker build -t openwrt-docker .
 ```
 
+### Isolated shared-folder smoke test
+
+`docker-compose.test.yml` boots an independent OpenWrt instance using only
+QEMU user-mode virtual NICs. It does not pass through or modify host Ethernet,
+PCI, or USB devices. Its web UI is bound to `127.0.0.1:18006`, and its storage
+is kept under `test-runtime/`.
+
+```bash
+docker build -t openwrt-docker-shared:25.12.5-test .
+./test/smoke-test-shared-folder.sh
+docker compose -f docker-compose.test.yml down
+```
+
+The smoke test verifies that OpenWrt and qemu-guest-agent have booted, that the
+guest mounted the 9p share, and that a file can be read and written in both
+directions. To reach the test UI remotely, use an SSH tunnel such as
+`ssh -L 18006:127.0.0.1:18006 <docker-host>` and open
+`http://127.0.0.1:18006` locally.
+
 If you like to specify a specific OpenWrt version, you can do (minimum version 24.10.0)
 ```bash
 docker build -t openwrt-docker . --build-arg OPENWRT_VERSION="24.10.0"
