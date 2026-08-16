@@ -1,7 +1,34 @@
 #!/bin/sh /etc/rc.common
 
-START=95
+START=15
+
+fail_closed() {
+    logger -t shared-folder -p daemon.crit "$1"
+    echo "shared-folder: $1; powering off" > /dev/console
+    sync
+    /sbin/poweroff -f
+    return 1
+}
 
 start() {
-    /usr/bin/mount-shared-folder
+    # Image build and automatic migration boots omit the requirement tag.
+    # Preserve the generic optional-share behavior with a single mount attempt.
+    if ! /usr/bin/shared-folder-required; then
+        /usr/bin/mount-shared-folder 1 >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    if ! /usr/bin/mount-shared-folder; then
+        fail_closed "required /shared virtfs mount is unavailable"
+        return 1
+    fi
+
+    if [ ! -f /shared/dhcphosts ]; then
+        fail_closed "required file /shared/dhcphosts is missing"
+        return 1
+    fi
+    if [ ! -x /shared/upgrade_setup.sh ]; then
+        fail_closed "required executable /shared/upgrade_setup.sh is missing"
+        return 1
+    fi
 }

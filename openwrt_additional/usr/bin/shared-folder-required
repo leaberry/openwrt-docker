@@ -1,0 +1,14 @@
+#!/bin/sh
+
+REQUIRED_TAG="shared-required"
+REQUIRED_POINT="/tmp/openwrt-docker-shared-required"
+
+is_mounted() {
+    awk -v mount_point="$REQUIRED_POINT" \
+        '$2 == mount_point { found = 1 } END { exit !found }' /proc/mounts
+}
+
+is_mounted && exit 0
+mkdir -p "$REQUIRED_POINT"
+mount -t 9p -o trans=virtio,version=9p2000.L,ro \
+    "$REQUIRED_TAG" "$REQUIRED_POINT" 2>/dev/null && is_mounted

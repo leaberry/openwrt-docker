@@ -274,6 +274,16 @@ else
   SHARE_FOLDER=""
 fi
 
+# A separate always-available 9p tag tells the guest that this is a normal
+# router boot where /shared is mandatory. Internal image-migration boots do
+# not use run_openwrt.sh, so they intentionally do not receive this tag.
+if [[ $SHARED_FOLDER_REQUIRED = "true" ]]; then
+  mkdir -p /run/shared-folder-required
+  SHARE_FOLDER_REQUIRED_ARGS="-virtfs local,path=/run/shared-folder-required,mount_tag=shared-required,security_model=none,id=shared-required"
+else
+  SHARE_FOLDER_REQUIRED_ARGS=""
+fi
+
 # Prepare qemu command
 CMD="qemu-system-$CPU_ARCH \
 --enable-kvm -cpu host \
@@ -289,6 +299,7 @@ $WAN_ARGS \
 $USB_ARGS \
 $PCI_ARGS \
 $SHARE_FOLDER \
+$SHARE_FOLDER_REQUIRED_ARGS \
 -qmp unix:/run/qmp-sock,server=on,wait=off \
 -chardev socket,path=/run/qga.sock,server=on,wait=off,id=qga0 \
 -device virtio-serial \

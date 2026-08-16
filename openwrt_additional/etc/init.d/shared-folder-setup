@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+# Run after networking is available so upgrade_setup.sh can install packages.
+START=99
+
+fail_closed() {
+    logger -t shared-folder-setup -p daemon.crit "$1"
+    echo "shared-folder-setup: $1; powering off" > /dev/console
+    sync
+    /sbin/poweroff -f
+    return 1
+}
+
+start() {
+    /usr/bin/shared-folder-required || return 0
+
+    /usr/bin/run-shared-folder-setup || \
+        fail_closed "upgrade_setup.sh did not complete successfully"
+}

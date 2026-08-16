@@ -196,8 +196,8 @@ RUN echo "Building for platform '$TARGETPLATFORM'" \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_INSTALL}  openssh-sftp-server" \
     && chmod +x /var/vm/openwrt_additional/usr/bin/* \
     && scp -P $SSH_PORT /var/vm/openwrt_additional/usr/bin/* root@localhost:/usr/bin \
-    && scp -P $SSH_PORT /var/vm/openwrt_additional/etc/init.d/shared-folder root@localhost:/etc/init.d/shared-folder \
-    && ssh root@localhost -p $SSH_PORT "chmod +x /etc/init.d/shared-folder; /etc/init.d/shared-folder enable" \
+    && scp -P $SSH_PORT /var/vm/openwrt_additional/etc/init.d/* root@localhost:/etc/init.d/ \
+    && ssh root@localhost -p $SSH_PORT "chmod +x /etc/init.d/shared-folder /etc/init.d/shared-folder-setup; /etc/init.d/shared-folder enable; /etc/init.d/shared-folder-setup enable" \
     && ssh root@localhost -p $SSH_PORT "${PACKAGE_REMOVE} openssh-sftp-server" \
     \
     # Sync changes into image and shutdown qemu \

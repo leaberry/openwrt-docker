@@ -1,0 +1,58 @@
+#!/bin/sh
+
+set -u
+
+SHARED_DIR=/shared
+STATE_DIR="$SHARED_DIR/.openwrt-docker"
+OPENWRT_VERSION="$(cat /etc/openwrt_version 2>/dev/null || uname -r)"
+MARKER="$STATE_DIR/upgrade-setup-${OPENWRT_VERSION}.complete"
+REBOOT_WRAPPER_DIR=/tmp/shared-folder-setup-bin
+
+awk -v mount_point="$SHARED_DIR" \
+    '$2 == mount_point { found = 1 } END { exit !found }' /proc/mounts || {
+    echo "$SHARED_DIR is not mounted" >&2
+    exit 1
+}
+
+[ -f "$SHARED_DIR/dhcphosts" ] || {
+    echo "$SHARED_DIR/dhcphosts is missing" >&2
+    exit 1
+}
+
+[ -x "$SHARED_DIR/upgrade_setup.sh" ] || {
+    echo "$SHARED_DIR/upgrade_setup.sh is missing or not executable" >&2
+    exit 1
+}
+
+[ -f "$MARKER" ] && exit 0
+
+mkdir -p "$STATE_DIR" "$REBOOT_WRAPPER_DIR"
+
+# upgrade_setup.sh traditionally ends by calling `reboot`. Put a wrapper first
+# in PATH so the completion marker is durable before that reboot begins. If a
+# setup script returns normally, mark it complete and reboot here instead.
+cat > "$REBOOT_WRAPPER_DIR/reboot" <<'EOF'
+#!/bin/sh
+set -eu
+printf '%s\n' "$OPENWRT_SHARED_SETUP_VERSION" > "$OPENWRT_SHARED_SETUP_MARKER.tmp"
+mv -f "$OPENWRT_SHARED_SETUP_MARKER.tmp" "$OPENWRT_SHARED_SETUP_MARKER"
+sync
+exec /sbin/reboot "$@"
+EOF
+chmod 0700 "$REBOOT_WRAPPER_DIR/reboot"
+
+export OPENWRT_SHARED_SETUP_MARKER="$MARKER"
+export OPENWRT_SHARED_SETUP_VERSION="$OPENWRT_VERSION"
+export PATH="$REBOOT_WRAPPER_DIR:$PATH"
+
+logger -t shared-folder-setup "Running $SHARED_DIR/upgrade_setup.sh for OpenWrt $OPENWRT_VERSION"
+if ! "$SHARED_DIR/upgrade_setup.sh"; then
+    logger -t shared-folder-setup -p daemon.err "upgrade_setup.sh failed"
+    exit 1
+fi
+
+# Support setup scripts that do not request their own reboot.
+printf '%s\n' "$OPENWRT_VERSION" > "$MARKER.tmp"
+mv -f "$MARKER.tmp" "$MARKER"
+sync
+exec /sbin/reboot

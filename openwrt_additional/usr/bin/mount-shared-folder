@@ -2,18 +2,25 @@
 
 MOUNT_TAG="shared"
 MOUNT_POINT="/shared"
+MAX_ATTEMPTS="${1:-10}"
 
-# If QEMU did not expose the virtfs device, there is nothing to mount.
-tag_found=false
-for tag_file in /sys/bus/virtio/drivers/9pnet_virtio/virtio*/mount_tag; do
-    if [ -r "$tag_file" ] && [ "$(cat "$tag_file")" = "$MOUNT_TAG" ]; then
-        tag_found=true
-        break
-    fi
+is_mounted() {
+    awk -v mount_point="$MOUNT_POINT" \
+        '$2 == mount_point { found = 1 } END { exit !found }' /proc/mounts
+}
+
+# This fork treats /shared as required. Retry the mount itself: OpenWrt does
+# not consistently expose the 9p mount tag through sysfs this early in boot.
+attempt=0
+mkdir -p "$MOUNT_POINT"
+while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
+    is_mounted && exit 0
+    mount -t 9p -o trans=virtio,version=9p2000.L,rw \
+        "$MOUNT_TAG" "$MOUNT_POINT" 2>/dev/null && \
+        is_mounted && exit 0
+    attempt=$((attempt + 1))
+    sleep 1
 done
 
-[ "$tag_found" = true ] || exit 0
-
-mkdir -p "$MOUNT_POINT"
-mountpoint -q "$MOUNT_POINT" || \
-    mount -t 9p -o trans=virtio,version=9p2000.L,rw "$MOUNT_TAG" "$MOUNT_POINT"
+echo "Required virtfs mount tag '$MOUNT_TAG' could not be mounted" >&2
+exit 1

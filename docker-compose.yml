@@ -78,6 +78,11 @@ services:
       #OPENWRT_AFTER_BOOT_CMD: "a=$$((1+1)); echo The result of 1+1 is $${a}" # Shell script example
       #OPENWRT_AFTER_BOOT_CMD: '[ -f /etc/first_boot_over ] || { touch /etc/first_boot_over; echo "Crazy first boot"; }' # Example to run a command only once
 
+      # This fork's router configuration requires /shared. A normal guest boot
+      # powers off if the mount or setup payload is unavailable. Internal
+      # image-migration boots are exempt so automatic upgrades still work.
+      SHARED_FOLDER_REQUIRED: "true"
+
       # When a user pulls a new OpenWrt container image most likely also a new OpenWrt image is included.
       # During the first container startup the new OpenWrt image will be automatically used.
       # The settings data from the previous OpenWrt image will be automatically copied. This is done by the OpenWrt sysupgrade command.

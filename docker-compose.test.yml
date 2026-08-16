@@ -13,6 +13,7 @@ services:
       CPU_COUNT: "2"
       RAM_COUNT: "512"
       DEBUG: "true"
+      SHARED_FOLDER_REQUIRED: "true"
     ports:
       - "127.0.0.1:18006:8006"
     devices:
@@ -22,3 +23,30 @@ services:
     volumes:
       - ./test-runtime/storage:/storage
       - ./test-runtime/shared:/shared
+    networks:
+      - isolated
+
+  openwrt-missing-shared-test:
+    profiles: ["fail-closed"]
+    container_name: openwrt-shared-folder-required-test
+    image: openwrt-docker-shared:25.12.5-test
+    environment:
+      LAN_IF: "host"
+      WAN_IF: "host"
+      FORWARD_LUCI: "false"
+      CPU_COUNT: "2"
+      RAM_COUNT: "512"
+      DEBUG: "true"
+      SHARED_FOLDER_REQUIRED: "true"
+    devices:
+      - /dev/kvm:/dev/kvm
+    restart: "no"
+    stop_grace_period: 2m
+    volumes:
+      - ./test-runtime/missing-shared-storage:/storage
+    networks:
+      - isolated
+
+networks:
+  isolated:
+    internal: true

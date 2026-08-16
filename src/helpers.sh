@@ -19,6 +19,7 @@ trap 'error "Status $? while: $BASH_COMMAND (line $LINENO/$BASH_LINENO)"' ERR
 : "${FORWARD_LUCI:=""}"   # Make LuCI OpenWrt web interface accessible via host LAN
 : "${LUCI_WEB_BUTTON_JSON:=""}"   # Adapt the "OpenWrt LuCI web interface" button to your needs.
 : "${OPENWRT_AFTER_BOOT_CMD:=""}" # User command or script to run after OpenWrt is booted
+: "${SHARED_FOLDER_REQUIRED:="false"}" # Require /shared and its one-time setup payload during normal boots
 : "${DISABLE_OPENWRT_AUTO_UPGRADE:=""}"  # Disables the OpenWrt upgrade check every container startup
 : "${IMAGE_SIZE_ON_INIT:=""}"  # New OpenWrt disk image size in MiB
 : "${IS_U_OS_APP:=""}"    # By default this container is not a u-OS app
